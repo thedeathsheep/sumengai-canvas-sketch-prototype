@@ -148,6 +148,18 @@ test("selection mode lets pointer input reach imported images and objects", () =
   assert.equal(editorRules.canCanvasCapturePointer?.("arrow"), true);
 });
 
+test("placed objects keep selection by stopping their click before it reaches the artboard", () => {
+  let propagationStopped = false;
+
+  editorRules.keepSelectionOnPlacedObjectClick?.({
+    stopPropagation() {
+      propagationStopped = true;
+    },
+  });
+
+  assert.equal(propagationStopped, true);
+});
+
 test("saved results are ordinary image nodes without generation side effects", () => {
   assert.deepEqual(
     presentation.createOrdinaryImageNode?.({

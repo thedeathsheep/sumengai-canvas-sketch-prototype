@@ -16,3 +16,7 @@ export function getPanelStateAfterInsert() {
 export function canCanvasCapturePointer(tool) {
   return tool !== "select";
 }
+
+export function keepSelectionOnPlacedObjectClick(event) {
+  event.stopPropagation();
+}

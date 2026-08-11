@@ -73,6 +73,7 @@ import {
   canCanvasCapturePointer,
   canSaveEditor,
   getPanelStateAfterInsert,
+  keepSelectionOnPlacedObjectClick,
 } from "./editorSessionRules";
 import {
   createInitialToolSession,
@@ -753,6 +754,7 @@ function PlacedFigure({
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
+      onClick={keepSelectionOnPlacedObjectClick}
       onPointerUp={() => {
         dragRef.current = null;
       }}
@@ -835,6 +837,7 @@ function PlacedText({
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
+      onClick={keepSelectionOnPlacedObjectClick}
       onPointerUp={() => {
         dragRef.current = null;
       }}
@@ -910,6 +913,7 @@ function PlacedMedia({
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
+      onClick={keepSelectionOnPlacedObjectClick}
       onPointerUp={() => {
         dragRef.current = null;
       }}
