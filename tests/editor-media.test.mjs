@@ -56,6 +56,51 @@ test("image objects can move one layer forward or backward", () => {
   );
 });
 
+test("corner dragging resizes an object proportionally and clamps usable scale", () => {
+  const baseGesture = {
+    center: { clientX: 100, clientY: 100 },
+    startPointer: { clientX: 150, clientY: 100 },
+    initialScale: 1,
+    viewScale: 2,
+  };
+
+  assert.equal(
+    media.getUniformObjectScale?.({
+      ...baseGesture,
+      pointer: { clientX: 200, clientY: 100 },
+    }),
+    2,
+  );
+  assert.equal(
+    media.getUniformObjectScale?.({
+      ...baseGesture,
+      pointer: { clientX: 125, clientY: 100 },
+    }),
+    0.5,
+  );
+  assert.equal(
+    media.getUniformObjectScale?.({
+      ...baseGesture,
+      pointer: { clientX: 105, clientY: 100 },
+    }),
+    0.35,
+  );
+  assert.equal(
+    media.getUniformObjectScale?.({
+      ...baseGesture,
+      pointer: { clientX: 400, clientY: 100 },
+    }),
+    3,
+  );
+});
+
+test("toolbar scale nudges use the same limits as corner resizing", () => {
+  assert.equal(media.nudgeObjectScale?.(1, "up"), 1.15);
+  assert.equal(media.nudgeObjectScale?.(1, "down"), 0.85);
+  assert.equal(media.nudgeObjectScale?.(3, "up"), 3);
+  assert.equal(media.nudgeObjectScale?.(0.35, "down"), 0.35);
+});
+
 test("a dragged library element is placed at the pointer position on a scaled artboard", () => {
   assert.deepEqual(
     media.getElementDropPosition?.(

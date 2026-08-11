@@ -160,6 +160,32 @@ test("placed objects keep selection by stopping their click before it reaches th
   assert.equal(propagationStopped, true);
 });
 
+test("selected images and elements expose the same four resize corners", () => {
+  const expectedCorners = [
+    "top-left",
+    "top-right",
+    "bottom-left",
+    "bottom-right",
+  ];
+
+  assert.deepEqual(
+    editorRules.getObjectResizeHandles?.({ selected: true, kind: "media" }),
+    expectedCorners,
+  );
+  assert.deepEqual(
+    editorRules.getObjectResizeHandles?.({ selected: true, kind: "figure" }),
+    expectedCorners,
+  );
+  assert.deepEqual(
+    editorRules.getObjectResizeHandles?.({ selected: true, kind: "text" }),
+    [],
+  );
+  assert.deepEqual(
+    editorRules.getObjectResizeHandles?.({ selected: false, kind: "media" }),
+    [],
+  );
+});
+
 test("saved results are ordinary image nodes without generation side effects", () => {
   assert.deepEqual(
     presentation.createOrdinaryImageNode?.({

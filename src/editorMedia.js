@@ -33,6 +33,44 @@ export function moveMediaLayer(items, id, direction) {
   return reordered;
 }
 
+export function getUniformObjectScale({
+  center,
+  startPointer,
+  pointer,
+  initialScale,
+  viewScale = 1,
+  minimumScale = 0.35,
+  maximumScale = 3,
+}) {
+  const normalizedViewScale = Math.max(0.01, viewScale);
+  const distanceFromCenter = (point) =>
+    Math.hypot(
+      (point.clientX - center.clientX) / normalizedViewScale,
+      (point.clientY - center.clientY) / normalizedViewScale,
+    );
+  const startDistance = distanceFromCenter(startPointer);
+  const currentDistance = distanceFromCenter(pointer);
+  const nextScale =
+    startDistance > 0
+      ? initialScale * (currentDistance / startDistance)
+      : initialScale;
+
+  return Math.round(
+    Math.min(maximumScale, Math.max(minimumScale, nextScale)) * 1000,
+  ) / 1000;
+}
+
+export function nudgeObjectScale(
+  scale,
+  direction,
+  { step = 0.15, minimumScale = 0.35, maximumScale = 3 } = {},
+) {
+  const delta = direction === "up" ? step : -step;
+  return Math.round(
+    Math.min(maximumScale, Math.max(minimumScale, scale + delta)) * 100,
+  ) / 100;
+}
+
 export function getElementDropPosition(pointer, artboardRect) {
   const toPercent = (value, start, size) =>
     Math.round(((value - start) / size) * 10000) / 100;

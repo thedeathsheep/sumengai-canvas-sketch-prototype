@@ -1033,6 +1033,25 @@ textarea:focus-visible {
   height: 8px;
   background: #f4f3ef;
   border: 1.5px solid #8f5df5;
+  z-index: 2;
+  touch-action: none;
+  transform-origin: center;
+}
+
+.resize-handle::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+}
+
+.resize-handle.top-left,
+.resize-handle.bottom-right {
+  cursor: nwse-resize;
+}
+
+.resize-handle.top-right,
+.resize-handle.bottom-left {
+  cursor: nesw-resize;
 }
 
 .top-left {

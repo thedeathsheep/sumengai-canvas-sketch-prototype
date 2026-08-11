@@ -20,3 +20,16 @@ export function canCanvasCapturePointer(tool) {
 export function keepSelectionOnPlacedObjectClick(event) {
   event.stopPropagation();
 }
+
+const resizeHandleCorners = [
+  "top-left",
+  "top-right",
+  "bottom-left",
+  "bottom-right",
+];
+
+export function getObjectResizeHandles({ selected, kind }) {
+  return selected && ["media", "figure"].includes(kind)
+    ? resizeHandleCorners
+    : [];
+}

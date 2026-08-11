@@ -72,6 +72,7 @@ import {
 import {
   canCanvasCapturePointer,
   canSaveEditor,
+  getObjectResizeHandles,
   getPanelStateAfterInsert,
   keepSelectionOnPlacedObjectClick,
 } from "./editorSessionRules";
@@ -90,6 +91,8 @@ import {
   armTransientAssetClickSuppression,
   createMediaInsertCoordinator,
   getElementDropPlacement,
+  getUniformObjectScale,
+  nudgeObjectScale,
   preventNativeAssetDrag,
   shouldStartAssetPointerDrag,
 } from "./editorMedia";
@@ -703,12 +706,84 @@ export function ImageBrowser({
   );
 }
 
+function ObjectResizeHandles({
+  kind,
+  item,
+  onResize,
+  onInteractionStart,
+  viewScale,
+}) {
+  const resizeRef = useRef(null);
+  const corners = getObjectResizeHandles({ selected: true, kind });
+
+  const beginResize = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const bounds = event.currentTarget.parentElement.getBoundingClientRect();
+    resizeRef.current = {
+      center: {
+        clientX: bounds.left + bounds.width / 2,
+        clientY: bounds.top + bounds.height / 2,
+      },
+      startPointer: {
+        clientX: event.clientX,
+        clientY: event.clientY,
+      },
+      initialScale: item.scale,
+      historyCaptured: false,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const resize = (event) => {
+    const gesture = resizeRef.current;
+    if (!gesture) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (!gesture.historyCaptured) {
+      onInteractionStart();
+      gesture.historyCaptured = true;
+    }
+    onResize(
+      getUniformObjectScale({
+        ...gesture,
+        pointer: {
+          clientX: event.clientX,
+          clientY: event.clientY,
+        },
+        viewScale,
+      }),
+    );
+  };
+
+  const finishResize = (event) => {
+    event.stopPropagation();
+    resizeRef.current = null;
+  };
+
+  return corners.map((corner) => (
+    <span
+      key={corner}
+      className={`selection-handle resize-handle ${corner}`}
+      data-resize-corner={corner}
+      style={{ transform: `scale(${1 / item.scale})` }}
+      onPointerDown={beginResize}
+      onPointerMove={resize}
+      onPointerUp={finishResize}
+      onPointerCancel={finishResize}
+      aria-hidden="true"
+    />
+  ));
+}
+
 function PlacedFigure({
   item,
   selected,
   onSelect,
   onMove,
+  onResize,
   onInteractionStart,
+  viewScale,
 }) {
   const dragRef = useRef(null);
 
@@ -767,10 +842,13 @@ function PlacedFigure({
       />
       {selected && (
         <>
-          <span className="selection-handle top-left" />
-          <span className="selection-handle top-right" />
-          <span className="selection-handle bottom-left" />
-          <span className="selection-handle bottom-right" />
+          <ObjectResizeHandles
+            kind="figure"
+            item={item}
+            onResize={onResize}
+            onInteractionStart={onInteractionStart}
+            viewScale={viewScale}
+          />
           <span className="rotation-handle" />
         </>
       )}
@@ -858,6 +936,7 @@ function PlacedMedia({
   selected,
   onSelect,
   onMove,
+  onResize,
   onInteractionStart,
   viewScale,
 }) {
@@ -920,6 +999,15 @@ function PlacedMedia({
       aria-label={`移动图片：${item.label}`}
     >
       <img src={item.src} alt="" />
+      {selected && (
+        <ObjectResizeHandles
+          kind="media"
+          item={item}
+          onResize={onResize}
+          onInteractionStart={onInteractionStart}
+          viewScale={viewScale}
+        />
+      )}
     </button>
   );
 }
@@ -1700,7 +1788,7 @@ function SketchEditor({
           icon: MagnifyingGlassMinus,
           onClick: () =>
             updateSelected({
-              scale: Math.max(0.7, selectedFigure.scale - 0.15),
+              scale: nudgeObjectScale(selectedFigure.scale, "down"),
             }),
         },
         {
@@ -1709,7 +1797,7 @@ function SketchEditor({
           icon: MagnifyingGlassPlus,
           onClick: () =>
             updateSelected({
-              scale: Math.min(2, selectedFigure.scale + 0.15),
+              scale: nudgeObjectScale(selectedFigure.scale, "up"),
             }),
         },
         {
@@ -1755,7 +1843,7 @@ function SketchEditor({
             icon: MagnifyingGlassMinus,
             onClick: () =>
               updateSelectedMedia({
-                scale: Math.max(0.35, selectedMedia.scale - 0.15),
+                scale: nudgeObjectScale(selectedMedia.scale, "down"),
               }),
           },
           {
@@ -1764,7 +1852,7 @@ function SketchEditor({
             icon: MagnifyingGlassPlus,
             onClick: () =>
               updateSelectedMedia({
-                scale: Math.min(2, selectedMedia.scale + 0.15),
+                scale: nudgeObjectScale(selectedMedia.scale, "up"),
               }),
           },
           {
@@ -2201,6 +2289,15 @@ function SketchEditor({
                       ),
                     );
                   }}
+                  onResize={(scale) => {
+                    setMediaItems((items) =>
+                      items.map((mediaItem) =>
+                        mediaItem.id === item.id
+                          ? { ...mediaItem, scale }
+                          : mediaItem,
+                      ),
+                    );
+                  }}
                   onInteractionStart={commitHistory}
                   viewScale={zoom / 100}
                 />
@@ -2288,7 +2385,15 @@ function SketchEditor({
                       ),
                     );
                   }}
+                  onResize={(scale) => {
+                    setFigures((items) =>
+                      items.map((figure) =>
+                        figure.id === item.id ? { ...figure, scale } : figure,
+                      ),
+                    );
+                  }}
                   onInteractionStart={commitHistory}
+                  viewScale={zoom / 100}
                 />
               ))}
             </div>
